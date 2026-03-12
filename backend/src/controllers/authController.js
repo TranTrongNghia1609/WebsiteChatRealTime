@@ -1,0 +1,134 @@
+import bcrypt from "bcrypt";
+import User from "../models/User.js";
+import jwt from "jsonwebtoken";
+import crypto from 'crypto'
+import Session from "../models/Session.js";
+const ACCESS_TOKEN_TTL = "30m";
+const REFRESH_TOKEN_TTL = 14 * 24 * 60 * 60 * 1000; //14 NGAY
+export const signUp = async (req, res) => {
+  try {
+    const { username, password, email, firstName, lastName } = req.body;
+    if (!username || !password || !email || !firstName || !lastName) {
+      return res.status(400).json({
+        message:
+          "Khong the thieu username, password, email, firstName va lastName",
+      });
+    }
+    //Kiem tra username ton tai chua
+    const duplicate = await User.findOne({ username });
+    if (duplicate) {
+      return res.status(409).json({ message: "Username da ton tai" });
+    }
+    //Ma hoa password
+    const hashedPassword = await bcrypt.hash(password, 10); //salt = 10
+    //Tao user moi
+    await User.create({
+      username,
+      hashedPassword,
+      email,
+      displayName: `${lastName} ${firstName}`,
+    });
+    return res.sendStatus(204);
+  } catch (err) {
+    console.log(`Loi khi goi signUp`, err);
+    return res.status(500).json({ message: `Loi he thong` });
+  }
+};
+export const signIn = async (req, res) => {
+  try {
+    //Lay input
+    const { username, password } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ message: "Thiếu username hoặc password" });
+    }
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res
+        .status(401)
+        .json({ message: "username hoac password khong dung" });
+    }
+    //Lay hashedPassword trong db de so voi password input
+    const passwordCorrect = await bcrypt.compare(password, user.hashedPassword);
+    if (!passwordCorrect) {
+      return res
+        .status(401)
+        .json({ message: "username hoac password khong dung" });
+    }
+    //Neu khop, tao accessToken voi JWT
+    const accessToken = jwt.sign(
+      { userId: user._id },
+      process.env.ACCESS_TOKEN_SECRET,
+      { expiresIn: ACCESS_TOKEN_TTL },
+    );
+    //Tao refresh token
+    const refreshToken = crypto.randomBytes(64).toString('hex');
+
+    //Tao session moi de luu refresh token
+    await Session.create({
+      userId: user._id,
+      refreshToken,
+      expiresAt: new Date(Date.now() + REFRESH_TOKEN_TTL),
+
+    });
+    //Tra refresh token ve trong cookie
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly:true,
+      secure:true,
+      sameSite: 'none', //backend, frontend rieng
+      maxAge: REFRESH_TOKEN_TTL,
+    });
+
+    //Tra access token ve trong res
+    return res.status(200).json({message: `User ${user.displayName} đã logged in`, accessToken} )
+  } catch (error) {
+    console.log(`Loi khi goi signIn`, error);
+    return res.status(500).json({ message: `Loi he thong` });
+  }
+};
+export const signOut = async(req, res) => {
+  try{
+    // Lấy refresh token từ cookie
+    const token = req.cookies?.refreshToken;
+    if(token){
+    // Xoá refresh token trong Session
+    await Session.deleteOne({refreshToken:token});
+
+    //Xoá cookie
+    res.clearCookie("refreshToken");
+    }
+    return res.sendStatus(204);
+    
+  }catch(error){
+    console.log(`Loi khi goi signOut`, error);
+    return res.status(500).json({ message: `Loi he thong` });
+  }
+};
+//Tạo access token mới từ refresh token
+export const refreshToken = async(req, res)=>{
+ try {
+  //Lấy refresh token từ cookie
+  const token = req.cookies?.refreshToken;
+  if(!token)  {
+    return res.status(401).json({message: "Token không tồn tại."});
+  }
+  //So với refresh token trong db
+  const session = await Session.findOne({refreshToken: token})
+  if(!session){
+    return res.status(403).json({message: "Token không hợp lệ hoặc đã hết hạn"});
+  }
+  // Kiểm tra hết hạn chưa
+  if(session.expiresAt< new Date()){
+    return res.status(403).json({message: "Token đã hết hạn"});
+  }
+  // Tạo access token mới
+  const accessToken = jwt.sign({
+    userId: session.userId
+  }, process.env.ACCESS_TOKEN_SECRET, {expiresIn: ACCESS_TOKEN_TTL});
+  // return
+  return res.status(200).json({accessToken});
+ } catch (error) {
+  console.error("Lỗi khi gọi refreshToken", error);
+  return res.status(500).json({message:"Lỗi hệ thống"})
+  
+ }
+}

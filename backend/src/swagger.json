@@ -1,0 +1,315 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "MOJI",
+    "version": "1.0.0",
+    "description": ""
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5001/api"
+    },
+    {
+      "url": "{{base_url}}"
+    },
+    {
+      "url": ""
+    }
+  ],
+  "paths": {
+    "/api/auth/signup": {
+      "post": {
+        "summary": "signUp",
+        "responses": {},
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "color"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "firstName": {
+                    "type": "string",
+                    "format": "utc-millisec"
+                  },
+                  "lastName": {
+                    "type": "string"
+                  }
+                }
+              },
+              "example": {
+                "username": "user5",
+                "password": "123123",
+                "email": "user5@gmail.com",
+                "firstName": "5",
+                "lastName": "User5"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/signin": {
+      "post": {
+        "summary": "signIn",
+        "responses": {},
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "color"
+                  }
+                }
+              },
+              "example": {
+                "username": "nghiadz",
+                "password": "123123"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/signout": {
+      "post": {
+        "summary": "New Request",
+        "responses": {},
+        "tags": [
+          "Auth"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/user/me": {
+      "get": {
+        "summary": "me",
+        "responses": {},
+        "tags": [
+          "User"
+        ]
+      }
+    },
+    "/friends/requests": {
+      "post": {
+        "summary": "SendFriendRequest",
+        "responses": {},
+        "tags": [
+          "Friend"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "to": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  }
+                }
+              },
+              "example": {
+                "to": "69a3d7d32c3aa8798a1fd5c0",
+                "message": "hello user3"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/friends/requests/69a85c2821a8d95557023236/accept": {
+      "post": {
+        "summary": "AcceptFriendRequest",
+        "responses": {},
+        "tags": [
+          "Friend"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/friends/": {
+      "get": {
+        "summary": "GetAllFriend",
+        "responses": {},
+        "tags": [
+          "Friend"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/": {
+      "get": {
+        "summary": "GetFriendRequests",
+        "responses": {},
+        "tags": [
+          "Friend"
+        ]
+      }
+    },
+    "/messages/direct": {
+      "post": {
+        "summary": "SendDirectMessage",
+        "responses": {},
+        "tags": [
+          "Message"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "recipientId": {
+                    "type": "string"
+                  },
+                  "content": {
+                    "type": "string"
+                  }
+                }
+              },
+              "example": {
+                "recipientId": "69a85bf121a8d9555702322d",
+                "content": "Tin dau tien user nghiadz"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/messages/group": {
+      "post": {
+        "summary": "SendGroupMessage",
+        "responses": {},
+        "tags": [
+          "Message"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              },
+              "example": "{\r\n    \"conversationId\": \"69aaeb4ff9e30922d2d20c64\",\r\n}"
+            }
+          }
+        }
+      }
+    },
+    "/conversations/": {
+      "post": {
+        "summary": "CreateConversation",
+        "responses": {},
+        "tags": [
+          "Conversation"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "memberIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "example": {
+                "type": "group",
+                "name": "Nhóm ABC",
+                "memberIds": [
+                  "69862a5434b52e1fec818d7c"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "GetConversations",
+        "responses": {},
+        "tags": [
+          "Conversation"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  }
+}
