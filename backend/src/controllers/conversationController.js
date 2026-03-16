@@ -63,7 +63,21 @@ export const createConversation = async (req, res) => {
         select: "displayName avatarUrl",
       },
     ]);
-    return res.status(201).json(conversation);
+    const participants = (conversation.participants || []).map((p) => ({
+        _id: p.userId?._id,
+        displayName: p.userId?.displayName,
+        avatarUrl: p.userId?.avatarUrl ?? null,
+        joinedAt: p.joinedAt,
+      }));
+    const formatted = {...conversation.toObject(), participants}
+    
+    if(type === 'group'){
+      memberIds.forEach((userId) => {
+        io.to(userId).emit('new-group', formatted);
+      })
+    }
+
+    return res.status(201).json({conversation: formatted});
   } catch (error) {
     console.error("Lỗi khi tạo conversation", error);
     return res.status(500).json({ message: "Lỗi hệ thống" });
@@ -115,7 +129,7 @@ export const getMessages = async (req, res) => {
     
     const query = {conversationId};
     if(cursor){
-      query.createAt = {$lt : new Date(cursor)}
+      query.createdAt = {$lt : new Date(cursor)}
     }
     let messages = await Message.find(query)
     .sort({createdAt: -1})
@@ -168,7 +182,7 @@ export const markAsSeen = async(req, res) => {
     if(last.senderId.toString() === userId){
       return res.status(200).json({message: "Sender không cần mark as seen"});
     }
-    const updated = await Conversation.findByIdAndDelete(
+    const updated = await Conversation.findByIdAndUpdate(
       conversationId,
       {
         $addToSet: {seenBy: userId},

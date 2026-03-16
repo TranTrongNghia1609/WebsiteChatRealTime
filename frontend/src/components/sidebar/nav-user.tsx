@@ -27,16 +27,22 @@ import {
 } from "@/components/ui/sidebar"
 import type { User } from "@/types/user"
 import Logout from "../auth/Logout"
+import { useState } from "react"
+import FriendRequestDiaLog from "../friendRequest/FriendRequestDialog"
+import ProfileDiaLog from "../profile/ProfileDialog"
 
 export function NavUser({
   user,
 }: {
   user: User
 }) {
-  const { isMobile } = useSidebar()
+  const { isMobile } = useSidebar();
+  const [friendRequestOpen, setfriendRequestOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
 
   return (
-    <SidebarMenu>
+    <>
+      <SidebarMenu>
       <SidebarMenuItem>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -75,12 +81,14 @@ export function NavUser({
             </DropdownMenuLabel>
            
             <DropdownMenuGroup>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={()=> setProfileOpen(true)}>
                 <UserIcon className="text-muted-foreground 
                 dark:group-focus:!text-accent-foreground" />
                 Tài khoản
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setfriendRequestOpen(true)}
+              >
                 <Bell className="text-muted-foreground 
                 dark:group-focus:!text-accent-foreground"/>
                 Thông báo
@@ -96,5 +104,16 @@ export function NavUser({
         </DropdownMenu>
       </SidebarMenuItem>
     </SidebarMenu>
+
+    <FriendRequestDiaLog
+      open ={friendRequestOpen}
+      setOpen ={setfriendRequestOpen}
+    />
+    <ProfileDiaLog
+      open={profileOpen}
+      setOpen={setProfileOpen}
+    />
+    </>
+    
   )
 }
